@@ -17,4 +17,4 @@
 
 ## 效果演示
 
-https://raw.githubusercontent.com/xymoryn/user-scripts/main/Appinn%20Forum%20Upload%20Enhancer/Appinn%20Forum%20Upload%20Enhancer.mp4
+https://github.com/user-attachments/assets/15007991-45f2-463b-9fb3-ed85dda20700

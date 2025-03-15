@@ -8,7 +8,7 @@
 
 #### 效果演示
 
-[效果演示](./Appinn%20Forum%20Upload%20Enhancer)
+https://github.com/user-attachments/assets/15007991-45f2-463b-9fb3-ed85dda20700
 
 #### 安装
 

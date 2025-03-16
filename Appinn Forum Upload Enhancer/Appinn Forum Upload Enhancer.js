@@ -2,7 +2,7 @@
 // @name         Appinn Forum Upload Enhancer
 // @name:zh-CN   小众软件论坛上传优化
 // @license      AGPL-3.0
-// @version      0.1.0
+// @version      0.2.0
 // @author       xymoryn
 // @namespace    https://github.com/xymoryn
 // @icon         https://h1.appinn.me/logo.png
@@ -75,7 +75,7 @@
 
     /** DOM选择器 */
     SELECTORS: {
-      REPLY_CONTROL: '#reply-control.open', // 回复框
+      REPLY_CONTROL: '#reply-control', // 回复框
       EDITOR_CONTROLS: '.toolbar-visible.wmd-controls', // 编辑器控件
       EDITOR_INPUT: '.d-editor-input', // 编辑区域
       UPLOAD_BUTTON: '.btn.upload', // 上传按钮
@@ -187,6 +187,15 @@
    * @namespace
    */
   const DOMUtils = {
+    /**
+     * 判断回复控制面板是否处于打开状态
+     * @param {HTMLElement} element - 回复框元素
+     * @returns {boolean} 是否处于打开状态
+     */
+    isReplyControlOpen(element) {
+      return element && element.id === 'reply-control' && !element.classList.contains('closed');
+    },
+
     /**
      * 保存编辑器状态
      * @param {HTMLTextAreaElement} editor - 编辑器元素
@@ -834,7 +843,7 @@
      */
     findElements() {
       const replyControl = document.querySelector(CONFIG.SELECTORS.REPLY_CONTROL);
-      if (!replyControl) return false;
+      if (!DOMUtils.isReplyControlOpen(replyControl)) return false;
 
       const editorControls = replyControl.querySelector(CONFIG.SELECTORS.EDITOR_CONTROLS);
       if (!editorControls) return false;
@@ -911,8 +920,7 @@
           if (
             mutation.type === 'attributes' &&
             mutation.attributeName === 'class' &&
-            mutation.target.id === 'reply-control' &&
-            mutation.target.classList.contains('open')
+            DOMUtils.isReplyControlOpen(mutation.target)
           ) {
             needsUpdate = true;
             break;

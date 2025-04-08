@@ -2,7 +2,7 @@
 // @name         Appinn Forum Upload Enhancer
 // @name:zh-CN   小众软件论坛上传优化
 // @license      AGPL-3.0
-// @version      0.2.0
+// @version      0.3.0
 // @author       xymoryn
 // @namespace    https://github.com/xymoryn
 // @icon         https://h1.appinn.me/logo.png
@@ -33,7 +33,7 @@
 
     /** 上传参数 */
     UPLOAD_PARAMS:
-      'authCode=appinn2&serverCompress=true&uploadChannel=telegram&uploadNameType=default&autoRetry=true',
+      'authCode=appinn2&serverCompress=false&uploadChannel=cfr2&uploadNameType=default&autoRetry=true',
 
     /** 上传域名 */
     UPLOAD_DOMAIN: 'https://h1.appinn.me',

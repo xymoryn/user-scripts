@@ -2,7 +2,7 @@
 // @name         Appinn Forum Upload Enhancer
 // @name:zh-CN   小众软件论坛上传优化
 // @license      AGPL-3.0
-// @version      0.3.0
+// @version      0.4.0
 // @author       xymoryn
 // @namespace    https://github.com/xymoryn
 // @icon         https://h1.appinn.me/logo.png
@@ -28,15 +28,36 @@
     /** 文件大小限制 (20MB) */
     MAX_FILE_SIZE: 20 * 1024 * 1024,
 
-    /** 上传URL */
-    UPLOAD_URL: 'https://h1.appinn.me/upload',
+    /** 上传端点 */
+    UPLOAD_ENDPOINT: 'https://h1.appinn.me/upload',
 
-    /** 上传参数 */
-    UPLOAD_PARAMS:
-      'authCode=appinn2&serverCompress=false&uploadChannel=cfr2&uploadNameType=default&autoRetry=true',
+    /**
+     * 上传配置参数
+     * @property {string} authCode - 认证码（必填）
+     * @property {boolean} serverCompress - 是否启用 Telegram 图片压缩：
+     *   - 启用丢失透明度
+     *   - 对大于 10MB 的文件无效
+     * @property {'telegram'|'cfr2'|'s3'} uploadChannel - 文件上传渠道：
+     *   - 'telegram': Telegram。当前小众图床唯一可用的上传渠道。
+     *   - 'cfr2': Cloudflare R2
+     *   - 's3': Amazon S3
+     * @property {'default'|'index'|'origin'|'short'} uploadNameType - 文件命名方式：
+     *   - 'default': 时间戳_原始文件名
+     *   - 'index': 仅时间戳
+     *   - 'origin': 原始文件名
+     *   - 'short': 类似短链接的随机字母数字
+     * @property {boolean} autoRetry - 上传失败时是否自动切换到其他渠道
+     */
+    UPLOAD_PARAMS: {
+      authCode: 'appinn2',
+      serverCompress: false,
+      uploadChannel: 'telegram',
+      uploadNameType: 'default',
+      autoRetry: true,
+    },
 
-    /** 上传域名 */
-    UPLOAD_DOMAIN: 'https://h1.appinn.me',
+    /** 资源访问 URL 前缀 */
+    ASSETS_URL_PREFIX: 'https://h1.appinn.me',
 
     /**
      * 支持的文件类型
@@ -718,7 +739,12 @@
         formData.append('filename', filename);
         formData.append('file', file);
 
-        const uploadUrl = `${CONFIG.UPLOAD_URL}?${CONFIG.UPLOAD_PARAMS}`;
+        const params = new URLSearchParams();
+        Object.entries(CONFIG.UPLOAD_PARAMS).forEach(([key, val]) => {
+          params.append(key, val);
+        });
+
+        const uploadUrl = `${CONFIG.UPLOAD_ENDPOINT}?${params.toString()}`;
 
         GM_xmlhttpRequest({
           method: 'POST',
@@ -736,7 +762,7 @@
                 return reject('无效的响应数据');
               }
 
-              const fileUrl = CONFIG.UPLOAD_DOMAIN + data[0].src;
+              const fileUrl = CONFIG.ASSETS_URL_PREFIX + data[0].src;
               resolve({
                 url: fileUrl,
                 filename,

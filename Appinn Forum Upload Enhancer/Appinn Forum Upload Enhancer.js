@@ -2,7 +2,7 @@
 // @name         Appinn Forum Upload Enhancer
 // @name:zh-CN   小众软件论坛上传优化
 // @license      AGPL-3.0
-// @version      0.4.1
+// @version      0.5.0
 // @author       xymoryn
 // @namespace    https://github.com/xymoryn
 // @icon         https://h1.appinn.me/logo.png
@@ -933,46 +933,116 @@
     init() {
       Logger.log('初始化小众软件论坛上传优化脚本...');
 
-      // 查找元素
-      if (this.findElements()) {
-        this.setupEventHandlers();
-      }
+      let currentObserver = null;
 
-      // 观察编辑器的出现
-      const observer = new MutationObserver((mutations) => {
-        let needsUpdate = false;
-
-        for (const mutation of mutations) {
-          if (
-            mutation.type === 'attributes' &&
-            mutation.attributeName === 'class' &&
-            DOMUtils.isReplyControlOpen(mutation.target)
-          ) {
-            needsUpdate = true;
-            break;
-          }
-        }
-
-        if (needsUpdate && this.findElements()) {
+      /**
+       * 尝试查找核心DOM元素并设置事件处理器
+       */
+      const attemptFullSetup = () => {
+        if (this.findElements()) {
           this.setupEventHandlers();
         }
-      });
+      };
 
-      // MutationObserver 配置
-      const replyControl = document.querySelector('#reply-control');
-      if (replyControl) {
-        observer.observe(replyControl, {
+      let setupWaitForReplyElement;
+
+      /**
+       * 监控 #reply-control 的状态和内容变化
+       * @param {HTMLElement} replyNode - #reply-control 元素。
+       */
+      const setupMainReplyObserver = (replyNode) => {
+        if (currentObserver) {
+          currentObserver.disconnect();
+        }
+
+        currentObserver = new MutationObserver((mutations) => {
+          if (!replyNode.isConnected) {
+            setupWaitForReplyElement();
+            return;
+          }
+
+          let needsReInit = false;
+
+          for (const mutation of mutations) {
+            // 情况1: #reply-control 的 class 属性变化 (通常表示回复框打开/关闭)
+            if (
+              mutation.type === 'attributes' &&
+              mutation.attributeName === 'class' &&
+              mutation.target === replyNode
+            ) {
+              if (DOMUtils.isReplyControlOpen(replyNode)) {
+                needsReInit = true;
+                break;
+              }
+            }
+            // 情况2: #reply-control 的子元素列表或子树发生变化
+            else if (
+              (mutation.type === 'childList' || mutation.type === 'subtree') &&
+              mutation.addedNodes.length > 0
+            ) {
+              if (DOMUtils.isReplyControlOpen(replyNode)) {
+                const editorControlsAppeared = Array.from(mutation.addedNodes).some(
+                  (node) =>
+                    node.nodeType === Node.ELEMENT_NODE &&
+                    ((node.matches && node.matches(CONFIG.SELECTORS.EDITOR_CONTROLS)) ||
+                      (node.querySelector && node.querySelector(CONFIG.SELECTORS.EDITOR_CONTROLS))),
+                );
+                if (editorControlsAppeared) {
+                  needsReInit = true;
+                  break;
+                }
+              }
+            }
+          }
+
+          if (needsReInit) {
+            // 延迟执行，确保DOM稳定
+            setTimeout(attemptFullSetup, 200);
+          }
+        });
+
+        currentObserver.observe(replyNode, {
           attributes: true,
           attributeFilter: ['class'],
-          childList: false,
-          subtree: false,
-        });
-      } else {
-        // 如果尚未找到目标元素，监听body以等待其创建
-        observer.observe(document.body, {
           childList: true,
           subtree: true,
         });
+
+        if (DOMUtils.isReplyControlOpen(replyNode)) {
+          // 延迟执行
+          setTimeout(attemptFullSetup, 50);
+        }
+      };
+
+      setupWaitForReplyElement = () => {
+        if (currentObserver) {
+          currentObserver.disconnect();
+        }
+
+        currentObserver = new MutationObserver((mutations, obs) => {
+          const replyNode = document.querySelector(CONFIG.SELECTORS.REPLY_CONTROL);
+          if (replyNode) {
+            setupMainReplyObserver(replyNode);
+          }
+        });
+
+        currentObserver.observe(document.body, {
+          childList: true,
+          subtree: true,
+        });
+      };
+
+      // --- 初始化流程开始 ---
+
+      // 1. 尝试立即执行一次设置 (主要应对页面直接加载完成且回复框已打开的情况)
+      attemptFullSetup();
+
+      // 2. 根据 #reply-control 是否已存在，决定启动哪个观察器
+      const initialReplyNode = document.querySelector(CONFIG.SELECTORS.REPLY_CONTROL);
+      if (initialReplyNode) {
+        setupMainReplyObserver(initialReplyNode);
+      } else {
+        setupWaitForReplyElement();
       }
 
       Logger.log('初始化完成。');

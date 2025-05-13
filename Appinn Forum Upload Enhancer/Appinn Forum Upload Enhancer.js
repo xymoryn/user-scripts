@@ -2,7 +2,7 @@
 // @name         Appinn Forum Upload Enhancer
 // @name:zh-CN   小众软件论坛上传优化
 // @license      AGPL-3.0
-// @version      0.4.0
+// @version      0.4.1
 // @author       xymoryn
 // @namespace    https://github.com/xymoryn
 // @icon         https://h1.appinn.me/logo.png
@@ -889,13 +889,13 @@
      * 设置事件处理器
      */
     setupEventHandlers() {
-      const { editorInput: editor, editorControls, uploadButton } = AppState.elements;
+      const {  editorControls, uploadButton } = AppState.elements;
 
-      if (!editor || !editorControls) return false;
+      if (!editorControls) return false;
 
       // 设置粘贴处理
-      editor.removeEventListener('paste', EventHandlers.pasteHandler);
-      editor.addEventListener('paste', EventHandlers.pasteHandler, { capture: true });
+      editorControls.removeEventListener('paste', EventHandlers.pasteHandler);
+      editorControls.addEventListener('paste', EventHandlers.pasteHandler, { capture: true });
 
       // 设置拖放处理
       editorControls.removeEventListener('drop', EventHandlers.dropHandler, true);
@@ -982,3 +982,4 @@
   // 启动脚本
   Initializer.init();
 })();
+
